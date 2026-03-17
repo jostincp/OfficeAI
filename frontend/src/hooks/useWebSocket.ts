@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { useOfficeStore } from '@/store/office-store';
+import { AGENTS } from '@/config/agents';
 import { eventBus } from '@/office/eventBus';
 
 const WS_URL = 'wss://officeai.testjostin.pro/ws';
@@ -32,6 +33,7 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const setWebSocket = useChatStore((s) => s.setWebSocket);
+  const addAgentResponse = useChatStore((s) => s.addAgentResponse);
   const updateAgentStatus = useOfficeStore((s) => s.updateAgentStatus);
   const incrementAgentTasks = useOfficeStore((s) => s.incrementAgentTasks);
 
@@ -142,6 +144,11 @@ export function useWebSocket() {
                   agentId: data.agentId,
                   output: data.output
                 });
+                
+                // Agregar respuesta al chat
+                const agent = AGENTS.find(a => a.id === data.agentId);
+                const agentName = agent ? `${agent.name} (${agent.role})` : data.agentId;
+                addAgentResponse(data.agentId, agentName, data.output);
               }
               break;
           }

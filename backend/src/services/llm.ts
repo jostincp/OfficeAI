@@ -65,31 +65,35 @@ export class LLMService {
   }
 
   private async callKimi(system: string, prompt: string): Promise<LLMResponse> {
-    const response = await axios.post(
-      'https://api.moonshot.cn/v1/chat/completions',
-      {
-        model: 'kimi-k2.5',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${this.moonshotKey}`,
-          'Content-Type': 'application/json'
+    try {
+      const response = await axios.post(
+        'https://api.moonshot.ai/v1/chat/completions',
+        {
+          model: 'kimi-k2.5',
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 1
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${this.moonshotKey}`,
+            'Content-Type': 'application/json'
+          }
         }
-      }
-    );
+      );
 
-    const data = response.data;
-    const content = data.choices[0]?.message?.content || '';
-    const tokensUsed = data.usage?.total_tokens || 0;
-    const cost = (tokensUsed / 1_000_000) * 2.0;
+      const data = response.data;
+      const content = data.choices[0]?.message?.content || '';
+      const tokensUsed = data.usage?.total_tokens || 0;
+      const cost = (tokensUsed / 1_000_000) * 2.0;
 
-    return { content, tokensUsed, cost };
+      return { content, tokensUsed, cost };
+    } catch (error: any) {
+      console.error('Error llamando a Moonshot:', error.response?.data || error.message);
+      throw error;
+    }
   }
 
   private async callMiniMax(system: string, prompt: string): Promise<LLMResponse> {

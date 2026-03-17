@@ -19,6 +19,7 @@ interface ChatState {
   ws: WebSocket | null;
 
   sendMessage: (text: string) => Promise<void>;
+  addAgentResponse: (agentId: string, agentName: string, content: string) => void;
   setWebSocket: (ws: WebSocket) => void;
   toggleDock: () => void;
   setDockExpanded: (expanded: boolean) => void;
@@ -41,6 +42,21 @@ export const useChatStore = create<ChatState>((set, get) => ({
   ws: null,
 
   setWebSocket: (ws) => set({ ws }),
+
+  addAgentResponse: (agentId, agentName, content) => {
+    const agentMsg: ChatMessage = {
+      id: generateId(),
+      role: "assistant",
+      content: content,
+      timestamp: Date.now(),
+      agentName: agentName,
+    };
+
+    set((s) => ({
+      messages: [...s.messages, agentMsg],
+      isStreaming: false,
+    }));
+  },
 
   sendMessage: async (text) => {
     const trimmed = text.trim();
