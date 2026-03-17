@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useOfficeStore } from '@/store/office-store';
 import { createDesk, updateMonitor } from '@/office/furniture';
+import { eventBus } from '@/office/eventBus';
 
 class OfficeScene extends Phaser.Scene {
   private agents: Record<string, {
@@ -190,64 +191,70 @@ class OfficeScene extends Phaser.Scene {
 
     // Guardar referencia global
     (window as any).phaserScene = this;
+
+    // Suscribirse a eventos del WebSocket
+    this.subscribeToEvents();
   }
 
-  updateAgentStatus(agentId: string, status: string) {
+  private subscribeToEvents() {
+    eventBus.on('agent_status_changed', ({ agentId, status }: { agentId: string; status: string }) => {
+      this.updateAgentLight(agentId, status);
+    });
+  }
+
+  private updateAgentLight(agentId: string, status: string) {
     const agent = this.agents[agentId];
     if (!agent) return;
 
-    const colors: Record<string, number> = {
-      idle: 0xf4a261,
-      working: 0x4FD1C5,
-      error: 0xef4444,
-      waiting_approval: 0xf59e0b
-    };
+    // Detener tweens existentes
+    this.tweens.killTweensOf(agent.light);
 
-    // Cambiar color de la luz (PointLight usa .color directamente)
-    agent.light.color = colors[status] || 0xf4a261;
+    switch (status) {
+      case 'working':
+        // Luz verde parpadeante
+        agent.light.color = 0x4FD1C5;
+        this.tweens.add({
+          targets: agent.light,
+          intensity: 0.8,
+          duration: 800,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+        break;
+      case 'waiting_approval':
+        // Luz amarilla parpadeante (pensando)
+        agent.light.color = 0xf59e0b;
+        this.tweens.add({
+          targets: agent.light,
+          intensity: 0.6,
+          duration: 1200,
+          yoyo: true,
+          repeat: -1,
+          ease: 'Sine.easeInOut'
+        });
+        break;
+      case 'error':
+        // Luz roja estática
+        agent.light.color = 0xef4444;
+        agent.light.intensity = 0.7;
+        break;
+      case 'idle':
+      default:
+        // Luz blanca/cálida estática
+        agent.light.color = 0xf4a261;
+        agent.light.intensity = 0.3;
+        break;
+    }
 
+    // Actualizar monitor también
     if (status === 'working') {
-      // Intensificar luz
-      this.tweens.add({
-        targets: agent.light,
-        intensity: 0.9,
-        duration: 300,
-        yoyo: true,
-        repeat: 5
-      });
-      
-      // Monitor encendido
       updateMonitor(this, agent.monitor, true);
-      
-      // Animación de trabajo
-      this.tweens.add({
-        targets: agent.sprite,
-        y: agent.baseY - 5,
-        duration: 200,
-        yoyo: true,
-        repeat: 10
-      });
-      
-      agent.sprite.setTint(0x4FD1C5);
-    } else if (status === 'error') {
-      agent.light.color = 0xef4444;
-      agent.sprite.setTint(0xef4444);
-      updateMonitor(this, agent.monitor, false);
-      
-      // Shake
-      this.tweens.add({
-        targets: agent.sprite,
-        x: agent.baseX + 3,
-        duration: 50,
-        yoyo: true,
-        repeat: 10
-      });
     } else {
-      agent.light.intensity = 0.3;
-      agent.sprite.clearTint();
       updateMonitor(this, agent.monitor, false);
     }
   }
+
 }
 
 export function PhaserOffice() {
@@ -282,7 +289,7 @@ export function PhaserOffice() {
     if (!scene) return;
 
     Object.values(agents).forEach((agent: any) => {
-      scene.updateAgentStatus(agent.id, agent.status);
+      scene.updateAgentLight(agent.id, agent.status);
     });
   }, [agents]);
 

@@ -84,5 +84,11 @@ export interface ProjectCreatedEvent {
     agentId: string;
     timestamp: number;
 }
-export type OrchestratorEvent = AgentStatusEvent | TaskUpdateEvent | ProjectUpdateEvent | ProjectCreatedEvent;
+export interface AgentOutputEvent {
+    type: 'agent_output';
+    agentId: string;
+    output: string;
+    timestamp: number;
+}
+export type OrchestratorEvent = AgentStatusEvent | TaskUpdateEvent | ProjectUpdateEvent | ProjectCreatedEvent | AgentOutputEvent;
 //# sourceMappingURL=types.d.ts.map

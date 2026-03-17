@@ -112,8 +112,16 @@ export interface ProjectCreatedEvent {
   timestamp: number;
 }
 
+export interface AgentOutputEvent {
+  type: 'agent_output';
+  agentId: string;
+  output: string;
+  timestamp: number;
+}
+
 export type OrchestratorEvent = 
   | AgentStatusEvent 
   | TaskUpdateEvent 
   | ProjectUpdateEvent
-  | ProjectCreatedEvent;
+  | ProjectCreatedEvent
+  | AgentOutputEvent;

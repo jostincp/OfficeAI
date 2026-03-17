@@ -44,6 +44,16 @@ const taskQueue = new TaskQueue(
       result,
       timestamp: Date.now()
     });
+    
+    // Si hay resultado, emitir evento de output
+    if (result && agentId) {
+      broadcast({
+        type: 'agent_output',
+        agentId,
+        output: result.output,
+        timestamp: Date.now()
+      });
+    }
   },
   (agentId, status, currentTask) => {
     broadcast({

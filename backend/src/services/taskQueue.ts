@@ -105,6 +105,9 @@ export class TaskQueue {
         duration
       };
 
+      // Emitir evento de output para el Activity Log
+      this.onAgentStatus(agent.id, 'output', taskId);
+      
       this.onTaskUpdate(taskId, 'completed', result, agent.id);
       this.onAgentStatus(agent.id, 'idle');
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { PhaserOffice } from "@/components/office-2d/PhaserOffice";
+import { ActivityLog } from "@/components/ActivityLog";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useOfficeStore } from "@/store/office-store";
 import { useResponsive } from "@/hooks/useResponsive";
@@ -41,8 +42,11 @@ export function App() {
   }
 
   return (
-    <AppShell isMobile={isMobile}>
-      <PhaserOffice />
-    </AppShell>
+    <>
+      <AppShell isMobile={isMobile}>
+        <PhaserOffice />
+      </AppShell>
+      <ActivityLog />
+    </>
   );
 }

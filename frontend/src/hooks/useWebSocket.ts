@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { useOfficeStore } from '@/store/office-store';
+import { eventBus } from '@/office/eventBus';
 
 const WS_URL = 'wss://officeai.testjostin.pro/ws';
 
@@ -15,10 +16,11 @@ export interface Agent {
 }
 
 export interface AgentEvent {
-  type: 'AGENT_THINKING' | 'AGENT_IDLE' | 'AGENT_WORKING' | 'AGENT_ERROR' | 'init' | 'agent_status' | 'task_update';
+  type: 'AGENT_THINKING' | 'AGENT_IDLE' | 'AGENT_WORKING' | 'AGENT_ERROR' | 'init' | 'agent_status' | 'task_update' | 'agent_output';
   agentId?: string;
   taskId?: string;
   status?: AgentStatus;
+  output?: string;
   agents?: Agent[];
   timestamp?: number;
 }
@@ -59,6 +61,12 @@ export function useWebSocket() {
               if (data.agentId && data.status) {
                 // Actualizar en el store de office
                 updateAgentStatus(data.agentId, data.status);
+                
+                // Emitir evento para Phaser
+                eventBus.emit('agent_status_changed', {
+                  agentId: data.agentId,
+                  status: data.status
+                });
                 
                 setAgents(prev => 
                   prev.map(agent => 
@@ -125,6 +133,15 @@ export function useWebSocket() {
                       : agent
                   )
                 );
+              }
+              break;
+            case 'agent_output':
+              if (data.agentId && data.output) {
+                // Emitir evento para Activity Log
+                eventBus.emit('agent_output', {
+                  agentId: data.agentId,
+                  output: data.output
+                });
               }
               break;
           }
