@@ -30,7 +30,7 @@ export class LLMService {
       case 'minimax':
         return this.callMiniMax(systemPrompt, fullPrompt);
       case 'moonshot':
-        return this.callKimi(systemPrompt, fullPrompt);
+        return this.callKimi(systemPrompt, fullPrompt, config.model);
       default:
         throw new Error(`Proveedor no soportado: ${config.provider}`);
     }
@@ -64,12 +64,12 @@ export class LLMService {
     return { content, tokensUsed, cost };
   }
 
-  private async callKimi(system: string, prompt: string): Promise<LLMResponse> {
+  private async callKimi(system: string, prompt: string, model: string = 'kimi-k2.5'): Promise<LLMResponse> {
     try {
       const response = await axios.post(
         'https://api.moonshot.ai/v1/chat/completions',
         {
-          model: 'kimi-k2.5',
+          model: model,
           messages: [
             { role: 'system', content: system },
             { role: 'user', content: prompt }

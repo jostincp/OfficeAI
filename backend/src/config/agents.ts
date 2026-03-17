@@ -52,7 +52,7 @@ export const AGENTS: Agent[] = [
 ];
 
 export const MODEL_CONFIG: Record<AgentRole, { provider: string; model: string }> = {
-  lead: { provider: 'moonshot', model: 'kimi-k2.5' },
+  lead: { provider: 'moonshot', model: 'kimi-k2-thinking' },
   backend: { provider: 'deepseek', model: 'deepseek-coder' },
   frontend: { provider: 'deepseek', model: 'deepseek-coder' },
   content: { provider: 'minimax', model: 'minimax-m2.5' },
