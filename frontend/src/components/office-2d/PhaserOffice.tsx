@@ -1,11 +1,13 @@
 import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { useOfficeStore } from '@/store/office-store';
+import { createDesk, updateMonitor } from '@/office/furniture';
 
 class OfficeScene extends Phaser.Scene {
   private agents: Record<string, {
     sprite: Phaser.GameObjects.Sprite;
     light: Phaser.GameObjects.PointLight;
+    monitor: Phaser.GameObjects.Rectangle;
     baseX: number;
     baseY: number;
   }> = {};
@@ -45,22 +47,50 @@ class OfficeScene extends Phaser.Scene {
     // Habilitar iluminación
     this.lights.enable().setAmbientColor(0x333344);
 
-    // Crear grid de piso manualmente (sin tilemap)
+    // Crear suelo de madera oscura con grilla
     const graphics = this.add.graphics();
+    const tileSize = 64;
+    const baseColor = 0x1a1a2e;
+    const gridColor = 0x2a2a4e;
     
-    // Fondo base
-    graphics.fillStyle(0x1a1a2e, 1);
-    graphics.fillRect(0, 0, 800, 600);
+    // Colores base RGB
+    const r = (baseColor >> 16) & 0xff;
+    const g = (baseColor >> 8) & 0xff;
+    const b = baseColor & 0xff;
     
-    // Grid de piso
-    for (let x = 0; x < 800; x += 64) {
-      for (let y = 0; y < 600; y += 64) {
-        if ((x / 64 + y / 64) % 2 === 0) {
-          graphics.fillStyle(0x252538, 1);
-          graphics.fillRect(x, y, 64, 64);
-        }
+    // Dibujar tiles con variación de brillo
+    for (let x = 0; x < 800; x += tileSize) {
+      for (let y = 0; y < 600; y += tileSize) {
+        // Variación aleatoria de brillo ±10%
+        const variation = 0.9 + Math.random() * 0.2;
+        
+        const newR = Math.min(255, Math.floor(r * variation));
+        const newG = Math.min(255, Math.floor(g * variation));
+        const newB = Math.min(255, Math.floor(b * variation));
+        
+        const tileColor = (newR << 16) | (newG << 8) | newB;
+        
+        graphics.fillStyle(tileColor, 1);
+        graphics.fillRect(x, y, tileSize, tileSize);
       }
     }
+    
+    // Dibujar líneas de grilla tenues
+    graphics.lineStyle(1, gridColor, 0.3);
+    
+    // Líneas verticales
+    for (let x = 0; x <= 800; x += tileSize) {
+      graphics.moveTo(x, 0);
+      graphics.lineTo(x, 600);
+    }
+    
+    // Líneas horizontales
+    for (let y = 0; y <= 600; y += tileSize) {
+      graphics.moveTo(0, y);
+      graphics.lineTo(800, y);
+    }
+    
+    graphics.strokePath();
 
     // Paredes
     graphics.fillStyle(0x1a1825, 1);
@@ -84,22 +114,13 @@ class OfficeScene extends Phaser.Scene {
       const x = data.x;
       const y = data.y;
       
-      // Sombra
-      const shadow = this.add.ellipse(x, y + 40, 80, 20, 0x000000, 0.3).setDepth(5);
+      // Crear muebles (silla depth 1, escritorio depth 2, monitor depth 4)
+      const { chair, desk, monitor } = createDesk(this, { x, y, agentId: data.id });
       
-      // Escritorio (detrás del personaje)
-      const desk = this.add.image(x, y, 'desk').setScale(1.5).setDepth(10);
-      
-      // PC (apagada inicialmente)
-      const pc = this.add.image(x, y - 30, 'pc_off').setScale(1.2).setDepth(11);
-      
-      // Silla (detrás del personaje)
-      const chair = this.add.image(x, y + 35, 'chair').setScale(1.2).setDepth(8);
-      
-      // Personaje (entre escritorio y silla) - solo primer frame
-      const sprite = this.add.sprite(x, y + 10, `char_${data.charIndex}`, 0)
+      // Personaje (depth 3) - entre escritorio y monitor
+      const sprite = this.add.sprite(x, y, `char_${data.charIndex}`, 0)
         .setScale(1.5)
-        .setDepth(15);
+        .setDepth(3);
       
       // Asegurar que solo se vea el primer frame
       sprite.setFrame(0);
@@ -137,6 +158,7 @@ class OfficeScene extends Phaser.Scene {
       this.agents[data.id] = {
         sprite,
         light,
+        monitor,
         baseX: x,
         baseY: y
       };
@@ -194,10 +216,13 @@ class OfficeScene extends Phaser.Scene {
         repeat: 5
       });
       
+      // Monitor encendido
+      updateMonitor(this, agent.monitor, true);
+      
       // Animación de trabajo
       this.tweens.add({
         targets: agent.sprite,
-        y: agent.baseY,
+        y: agent.baseY - 5,
         duration: 200,
         yoyo: true,
         repeat: 10
@@ -207,6 +232,7 @@ class OfficeScene extends Phaser.Scene {
     } else if (status === 'error') {
       agent.light.setColor(0xef4444);
       agent.sprite.setTint(0xef4444);
+      updateMonitor(this, agent.monitor, false);
       
       // Shake
       this.tweens.add({
@@ -219,6 +245,7 @@ class OfficeScene extends Phaser.Scene {
     } else {
       agent.light.setIntensity(0.5);
       agent.sprite.clearTint();
+      updateMonitor(this, agent.monitor, false);
     }
   }
 }

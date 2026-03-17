@@ -1,74 +1,49 @@
-/**
- * Floor tile pattern storage and caching.
- *
- * Stores grayscale floor patterns loaded from individual PNGs in assets/floors/.
- * Uses shared colorize module for HSL tinting (Photoshop-style Colorize).
- * Caches colorized SpriteData by (pattern, h, s, b, c) key.
- */
+import Phaser from 'phaser';
 
-import { FALLBACK_FLOOR_COLOR, TILE_SIZE } from '../constants.js';
-import { clearColorizeCache, getColorizedSprite } from './colorize.js';
-import type { FloorColor, SpriteData } from './types.js';
-
-/** Default solid gray 16×16 tile used when floor tile PNGs are not loaded */
-const DEFAULT_FLOOR_SPRITE: SpriteData = Array.from(
-  { length: TILE_SIZE },
-  () => Array(TILE_SIZE).fill(FALLBACK_FLOOR_COLOR) as string[],
-);
-
-/** Module-level storage for floor tile sprites (set once on load) */
-let floorSprites: SpriteData[] = [];
-
-/** Wall color constant */
-export const WALL_COLOR = '#3A3A5C';
-
-/** Set floor tile sprites (called once when extension sends floorTilesLoaded) */
-export function setFloorSprites(sprites: SpriteData[]): void {
-  floorSprites = sprites;
-  clearColorizeCache();
-}
-
-/** Get the raw (grayscale) floor sprite for a pattern index (1-7 -> array index 0-6).
- *  Falls back to the default solid gray tile when floors.png is not loaded. */
-export function getFloorSprite(patternIndex: number): SpriteData | null {
-  const idx = patternIndex - 1;
-  if (idx < 0) return null;
-  if (idx < floorSprites.length) return floorSprites[idx];
-  // No PNG sprites loaded — return default solid tile for any valid pattern index
-  if (floorSprites.length === 0 && patternIndex >= 1) return DEFAULT_FLOOR_SPRITE;
-  return null;
-}
-
-/** Check if floor sprites are available (always true — falls back to default solid tile) */
-export function hasFloorSprites(): boolean {
-  return true;
-}
-
-/** Get count of available floor patterns (at least 1 for the default solid tile) */
-export function getFloorPatternCount(): number {
-  return floorSprites.length > 0 ? floorSprites.length : 1;
-}
-
-/** Get all floor sprites (for preview rendering, falls back to default solid tile) */
-export function getAllFloorSprites(): SpriteData[] {
-  return floorSprites.length > 0 ? floorSprites : [DEFAULT_FLOOR_SPRITE];
-}
-
-/**
- * Get a colorized version of a floor sprite.
- * Uses Photoshop-style Colorize: grayscale -> HSL with given hue/saturation,
- * then brightness/contrast adjustment.
- */
-export function getColorizedFloorSprite(patternIndex: number, color: FloorColor): SpriteData {
-  const key = `floor-${patternIndex}-${color.h}-${color.s}-${color.b}-${color.c}`;
-
-  const base = getFloorSprite(patternIndex);
-  if (!base) {
-    // Return a 16x16 magenta error tile
-    const err: SpriteData = Array.from({ length: 16 }, () => Array(16).fill('#FF00FF'));
-    return err;
+export function createFloor(scene: Phaser.Scene): Phaser.GameObjects.Graphics {
+  const graphics = scene.add.graphics();
+  const tileSize = 64;
+  const baseColor = 0x1a1a2e;
+  const gridColor = 0x2a2a4e;
+  
+  // Colores base RGB
+  const r = (baseColor >> 16) & 0xff;
+  const g = (baseColor >> 8) & 0xff;
+  const b = baseColor & 0xff;
+  
+  // Dibujar tiles con variación de brillo
+  for (let x = 0; x < 800; x += tileSize) {
+    for (let y = 0; y < 600; y += tileSize) {
+      // Variación aleatoria de brillo ±10%
+      const variation = 0.9 + Math.random() * 0.2;
+      
+      const newR = Math.min(255, Math.floor(r * variation));
+      const newG = Math.min(255, Math.floor(g * variation));
+      const newB = Math.min(255, Math.floor(b * variation));
+      
+      const tileColor = (newR << 16) | (newG << 8) | newB;
+      
+      graphics.fillStyle(tileColor, 1);
+      graphics.fillRect(x, y, tileSize, tileSize);
+    }
   }
-
-  // Floor tiles are always colorized (grayscale patterns need Photoshop-style Colorize)
-  return getColorizedSprite(key, base, { ...color, colorize: true });
+  
+  // Dibujar líneas de grilla tenues
+  graphics.lineStyle(1, gridColor, 0.3);
+  
+  // Líneas verticales
+  for (let x = 0; x <= 800; x += tileSize) {
+    graphics.moveTo(x, 0);
+    graphics.lineTo(x, 600);
+  }
+  
+  // Líneas horizontales
+  for (let y = 0; y <= 600; y += tileSize) {
+    graphics.moveTo(0, y);
+    graphics.lineTo(800, y);
+  }
+  
+  graphics.strokePath();
+  
+  return graphics;
 }

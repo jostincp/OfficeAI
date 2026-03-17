@@ -9,6 +9,7 @@ interface Agent {
   position: { x: number; y: number };
   currentTask?: string;
   confirmed: boolean;
+  tasksCompleted?: number;
 }
 
 type ViewMode = "2d" | "3d";
@@ -33,12 +34,12 @@ interface OfficeState {
 }
 
 const initialAgents: Agent[] = [
-  { id: 'lead-001', name: 'Alex', status: 'idle', position: { x: 100, y: 100 }, confirmed: true },
-  { id: 'backend-001', name: 'Sam', status: 'idle', position: { x: 200, y: 100 }, confirmed: true },
-  { id: 'frontend-001', name: 'Jordan', status: 'idle', position: { x: 300, y: 100 }, confirmed: true },
-  { id: 'content-001', name: 'Olivia', status: 'idle', position: { x: 400, y: 100 }, confirmed: true },
-  { id: 'qa-001', name: 'Casey', status: 'idle', position: { x: 500, y: 100 }, confirmed: true },
-  { id: 'scheduler-001', name: 'Taylor', status: 'idle', position: { x: 600, y: 100 }, confirmed: true },
+  { id: 'lead-001', name: 'Alex', status: 'idle', position: { x: 100, y: 100 }, confirmed: true, tasksCompleted: 0 },
+  { id: 'backend-001', name: 'Sam', status: 'idle', position: { x: 200, y: 100 }, confirmed: true, tasksCompleted: 0 },
+  { id: 'frontend-001', name: 'Jordan', status: 'idle', position: { x: 300, y: 100 }, confirmed: true, tasksCompleted: 0 },
+  { id: 'content-001', name: 'Olivia', status: 'idle', position: { x: 400, y: 100 }, confirmed: true, tasksCompleted: 0 },
+  { id: 'qa-001', name: 'Casey', status: 'idle', position: { x: 500, y: 100 }, confirmed: true, tasksCompleted: 0 },
+  { id: 'scheduler-001', name: 'Taylor', status: 'idle', position: { x: 600, y: 100 }, confirmed: true, tasksCompleted: 0 },
 ];
 
 const initialAgentsRecord: Record<string, Agent> = {};
