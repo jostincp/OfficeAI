@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: officeai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - officeai-network
+
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: officeai-orchestrator
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:3000:3000"
+    networks:
+      - officeai-network
+      - web-network
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+    env_file:
+      - .env
+    depends_on:
+      - redis
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  redis-data:
+
+networks:
+  officeai-network:
+    driver: bridge
+  web-network:
+    external: true
+    name: core_web-network

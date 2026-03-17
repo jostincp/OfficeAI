@@ -1,0 +1,30 @@
+# ============================================
+# OfficeAI - docker-compose.yml
+# ============================================
+# Configuración para desarrollo local
+# ============================================
+
+services:
+  # Frontend - openclaw-office adaptado
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: officeai-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:18789
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm dev --host
+    restart: unless-stopped
+
+# ============================================
+# Para desarrollo local necesitas:
+# 1. Docker Desktop instalado
+# 2. Ejecutar: docker-compose up -d
+# 3. Acceder a: http://localhost:5173
+# ============================================

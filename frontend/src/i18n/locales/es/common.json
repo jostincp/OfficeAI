@@ -1,0 +1,113 @@
+{
+  "status": {
+    "connecting": "Conectando...",
+    "connected": "Conectado",
+    "reconnecting": "Reconectando",
+    "disconnected": "Desconectado",
+    "error": "Error de conexión",
+    "active": "Activo",
+    "paused": "Pausado",
+    "ok": "OK",
+    "failed": "Fallido",
+    "running": "Ejecutando",
+    "pending": "Pendiente",
+    "disabled": "Deshabilitado"
+  },
+  "actions": {
+    "send": "Enviar",
+    "cancel": "Cancelar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "stop": "Detener",
+    "retry": "Reintentar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "refresh": "Actualizar",
+    "create": "Crear",
+    "edit": "Editar"
+  },
+  "time": {
+    "justNow": "Ahora mismo",
+    "secondsAgo": "Hace {{count}} segundos",
+    "minutesAgo": "Hace {{count}} minutos",
+    "hoursAgo": "Hace {{count}} horas",
+    "running": "Ejecutando {{seconds}}s",
+    "runningMinutes": "Ejecutando {{minutes}}m {{seconds}}s"
+  },
+  "empty": {
+    "noData": "Sin datos",
+    "noCostData": "Sin datos de costo",
+    "noActivityData": "Sin datos de actividad",
+    "noRelationData": "Sin datos de relación de Agentes",
+    "noEvents": "Sin eventos",
+    "noMatchingAgents": "Sin Agentes coincidentes",
+    "noSubAgents": "Sin Sub-Agentes",
+    "waitingUsageData": "Sin datos, esperando información de uso..."
+  },
+  "agent": {
+    "statusLabels": {
+      "idle": "Inactivo",
+      "thinking": "Pensando",
+      "tool_calling": "Llamando herramienta",
+      "speaking": "Respondiendo",
+      "spawning": "Creando",
+      "error": "Error",
+      "offline": "Desconectado"
+    }
+  },
+  "zones": {
+    "desk": "Área de Escritorios",
+    "meeting": "Área de Reuniones",
+    "hotDesk": "Escritorios Temporales",
+    "lounge": "Área de Descanso"
+  },
+  "errors": {
+    "notConnected": "No conectado al Gateway",
+    "operationFailed": "Operación fallida",
+    "operationTimeout": "Tiempo de espera agotado, el Gateway puede no soportar esta operación",
+    "adapterNotInitialized": "Adaptador del Gateway no inicializado",
+    "unknownError": "Error desconocido",
+    "errorOccurred": "Ocurrió un error"
+  },
+  "events": {
+    "startRunning": "Iniciando ejecución",
+    "thinking": "Pensando",
+    "runEnded": "Ejecución finalizada",
+    "fallback": "Procesamiento alternativo",
+    "toolCall": "Llamando herramienta: {{name}}",
+    "toolDone": "Herramienta completada: {{name}}",
+    "errorPrefix": "Error: {{message}}",
+    "unknownStream": "Flujo desconocido: {{stream}}",
+    "lifecycleUnknown": "Ciclo de vida: {{phase}}"
+  },
+  "connectionSetup": {
+    "eyebrow": "Configuración de Conexión",
+    "title": "Selecciona el tipo de conexión",
+    "description": "Por favor selecciona cómo conectar al sistema.",
+    "syncing": "Aplicando configuración...",
+    "footer": "El modo local usa el Gateway predeterminado.",
+    "actions": {
+      "continue": "Continuar",
+      "connecting": "Conectando..."
+    },
+    "local": {
+      "title": "Gateway Local",
+      "description": "Usar el Gateway local predeterminado."
+    },
+    "remote": {
+      "title": "Gateway Remoto",
+      "description": "Conectar a un Gateway remoto.",
+      "gatewayUrlLabel": "Dirección del Gateway",
+      "gatewayUrlHint": "Pega el enlace completo",
+      "gatewayUrlPlaceholder": "http://*.*.*.*/gateway?token=***",
+      "gatewayTokenLabel": "Token del Gateway",
+      "gatewayTokenHint": "Si el enlace no tiene token, escríbelo aquí.",
+      "gatewayTokenExtracted": "Token extraído automáticamente.",
+      "gatewayTokenPlaceholder": "Ingresa el token"
+    },
+    "validation": {
+      "gatewayUrlRequired": "Por favor ingresa la dirección del Gateway.",
+      "gatewayTokenRequired": "Por favor ingresa el token del Gateway."
+    }
+  }
+}

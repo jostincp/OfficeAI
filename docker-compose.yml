@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: officeai-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - officeai-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: officeai-backend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - PORT=3000
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - redis
+    networks:
+      - officeai-network
+      - web-network
+    volumes:
+      - ./backend/logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: officeai-frontend
+    restart: unless-stopped
+    networks:
+      - officeai-network
+      - web-network
+
+volumes:
+  redis-data:
+
+networks:
+  officeai-network:
+    driver: bridge
+  web-network:
+    external: true
+    name: core_web-network
