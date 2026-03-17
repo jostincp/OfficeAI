@@ -10,13 +10,11 @@ export interface LLMResponse {
 
 export class LLMService {
   private deepseekKey: string;
-  private openrouterKey: string;
   private minimaxKey: string;
   private moonshotKey: string;
 
   constructor() {
     this.deepseekKey = process.env.DEEPSEEK_API_KEY || '';
-    this.openrouterKey = process.env.OPENROUTER_API_KEY || '';
     this.minimaxKey = process.env.MINIMAX_API_KEY || '';
     this.moonshotKey = process.env.MOONSHOT_API_KEY || '';
   }
@@ -29,8 +27,6 @@ export class LLMService {
     switch (config.provider) {
       case 'deepseek':
         return this.callDeepSeek(systemPrompt, fullPrompt);
-      case 'openrouter':
-        return this.callOpenRouter(config.model, systemPrompt, fullPrompt);
       case 'minimax':
         return this.callMiniMax(systemPrompt, fullPrompt);
       case 'moonshot':
@@ -68,43 +64,7 @@ export class LLMService {
     return { content, tokensUsed, cost };
   }
 
-  private async callOpenRouter(model: string, system: string, prompt: string): Promise<LLMResponse> {
-    // Kimi usa su propia API, no OpenRouter
-    if (model.includes('kimi')) {
-      return this.callKimi(system, prompt);
-    }
-
-    const response = await axios.post(
-      'https://openrouter.ai/api/v1/chat/completions',
-      {
-        model: model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${this.openrouterKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://officeai.local',
-          'X-Title': 'OfficeAI Orchestrator'
-        }
-      }
-    );
-
-    const data = response.data;
-    const content = data.choices[0]?.message?.content || '';
-    const tokensUsed = data.usage?.total_tokens || 0;
-    const cost = (tokensUsed / 1_000_000) * 2.0;
-
-    return { content, tokensUsed, cost };
-  }
-
   private async callKimi(system: string, prompt: string): Promise<LLMResponse> {
-    // Usar API directa de Moonshot
     const response = await axios.post(
       'https://api.moonshot.cn/v1/chat/completions',
       {
@@ -127,7 +87,6 @@ export class LLMService {
     const data = response.data;
     const content = data.choices[0]?.message?.content || '';
     const tokensUsed = data.usage?.total_tokens || 0;
-    // Kimi: ~$2.00 por 1M tokens
     const cost = (tokensUsed / 1_000_000) * 2.0;
 
     return { content, tokensUsed, cost };

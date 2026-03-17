@@ -5,7 +5,7 @@ export const AGENTS: Agent[] = [
     id: 'lead-001',
     role: 'lead',
     name: 'Alex',
-    model: 'qwen/qwen-2.5-max',
+    model: 'kimi-k2.5',
     status: 'idle',
     avatar: '/avatars/lead.png'
   },
@@ -13,7 +13,7 @@ export const AGENTS: Agent[] = [
     id: 'backend-001',
     role: 'backend',
     name: 'Sam',
-    model: 'deepseek/deepseek-coder',
+    model: 'deepseek-coder',
     status: 'idle',
     avatar: '/avatars/backend.png'
   },
@@ -21,7 +21,7 @@ export const AGENTS: Agent[] = [
     id: 'frontend-001',
     role: 'frontend',
     name: 'Jordan',
-    model: 'deepseek/deepseek-coder',
+    model: 'deepseek-coder',
     status: 'idle',
     avatar: '/avatars/frontend.png'
   },
@@ -29,7 +29,7 @@ export const AGENTS: Agent[] = [
     id: 'content-001',
     role: 'content',
     name: 'Olivia',
-    model: 'minimax/minimax-m2.5',
+    model: 'minimax-m2.5',
     status: 'idle',
     avatar: '/avatars/content.png'
   },
@@ -37,7 +37,7 @@ export const AGENTS: Agent[] = [
     id: 'qa-001',
     role: 'qa',
     name: 'Casey',
-    model: 'moonshot/kimi-k2.5',
+    model: 'kimi-k2.5',
     status: 'idle',
     avatar: '/avatars/qa.png'
   },
@@ -45,7 +45,7 @@ export const AGENTS: Agent[] = [
     id: 'scheduler-001',
     role: 'scheduler',
     name: 'Taylor',
-    model: 'qwen/qwen-2.5-max',
+    model: 'kimi-k2.5',
     status: 'idle',
     avatar: '/avatars/scheduler.png'
   }
