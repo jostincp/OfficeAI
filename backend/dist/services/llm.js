@@ -10,10 +10,12 @@ class LLMService {
     deepseekKey;
     openrouterKey;
     minimaxKey;
+    moonshotKey;
     constructor() {
         this.deepseekKey = process.env.DEEPSEEK_API_KEY || '';
         this.openrouterKey = process.env.OPENROUTER_API_KEY || '';
         this.minimaxKey = process.env.MINIMAX_API_KEY || '';
+        this.moonshotKey = process.env.MOONSHOT_API_KEY || '';
     }
     async generate(role, prompt, context) {
         const systemPrompt = agents_1.SYSTEM_PROMPTS[role];
@@ -26,6 +28,8 @@ class LLMService {
                 return this.callOpenRouter(config.model, systemPrompt, fullPrompt);
             case 'minimax':
                 return this.callMiniMax(systemPrompt, fullPrompt);
+            case 'moonshot':
+                return this.callKimi(systemPrompt, fullPrompt);
             default:
                 throw new Error(`Proveedor no soportado: ${config.provider}`);
         }
@@ -79,6 +83,7 @@ class LLMService {
         return { content, tokensUsed, cost };
     }
     async callKimi(system, prompt) {
+        // Usar API directa de Moonshot
         const response = await axios_1.default.post('https://api.moonshot.cn/v1/chat/completions', {
             model: 'kimi-k2.5',
             messages: [
@@ -89,7 +94,7 @@ class LLMService {
             max_tokens: 4000
         }, {
             headers: {
-                'Authorization': `Bearer ${this.openrouterKey}`,
+                'Authorization': `Bearer ${this.moonshotKey}`,
                 'Content-Type': 'application/json'
             }
         });

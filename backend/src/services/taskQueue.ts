@@ -18,12 +18,12 @@ export class TaskQueue {
   private redis: Redis;
   private taskQueue: Queue<TaskData>;
   private llmService: LLMService;
-  private onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult) => void;
+  private onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult, agentId?: string) => void;
   private onAgentStatus: (agentId: string, status: string, taskId?: string) => void;
 
   constructor(
     redisUrl: string,
-    onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult) => void,
+    onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult, agentId?: string) => void,
     onAgentStatus: (agentId: string, status: string, taskId?: string) => void
   ) {
     this.redis = new Redis(redisUrl, { maxRetriesPerRequest: null });
@@ -105,7 +105,7 @@ export class TaskQueue {
         duration
       };
 
-      this.onTaskUpdate(taskId, 'completed', result);
+      this.onTaskUpdate(taskId, 'completed', result, agent.id);
       this.onAgentStatus(agent.id, 'idle');
 
       return result;

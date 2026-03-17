@@ -203,8 +203,8 @@ class OfficeScene extends Phaser.Scene {
       waiting_approval: 0xf59e0b
     };
 
-    // Cambiar color de la luz
-    agent.light.setColor(colors[status] || 0xf4a261);
+    // Cambiar color de la luz (PointLight usa .color directamente)
+    agent.light.color = colors[status] || 0xf4a261;
 
     if (status === 'working') {
       // Intensificar luz
@@ -230,7 +230,7 @@ class OfficeScene extends Phaser.Scene {
       
       agent.sprite.setTint(0x4FD1C5);
     } else if (status === 'error') {
-      agent.light.setColor(0xef4444);
+      agent.light.color = 0xef4444;
       agent.sprite.setTint(0xef4444);
       updateMonitor(this, agent.monitor, false);
       
@@ -243,7 +243,7 @@ class OfficeScene extends Phaser.Scene {
         repeat: 10
       });
     } else {
-      agent.light.setIntensity(0.5);
+      agent.light.intensity = 0.3;
       agent.sprite.clearTint();
       updateMonitor(this, agent.monitor, false);
     }

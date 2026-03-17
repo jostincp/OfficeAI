@@ -24,7 +24,9 @@ interface OfficeState {
   selectedAgentId: string | null;
   
   // Actions
-  setAgents: (agents: Array<{ id: string; name: string; status: string; currentTask?: string }>) => void;
+  setAgents: (agents: Array<{ id: string; name: string; status: string; currentTask?: string; tasksCompleted?: number }>) => void;
+  updateAgentStatus: (agentId: string, status: AgentStatus) => void;
+  incrementAgentTasks: (agentId: string) => void;
   setViewMode: (mode: ViewMode) => void;
   setTheme: (theme: ThemeMode) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
@@ -64,6 +66,7 @@ export const useOfficeStore = create<OfficeState>((set) => ({
             ...newAgents[agentData.id],
             status: agentData.status as AgentStatus,
             currentTask: agentData.currentTask,
+            tasksCompleted: agentData.tasksCompleted !== undefined ? agentData.tasksCompleted : newAgents[agentData.id].tasksCompleted,
           };
         } else {
           newAgents[agentData.id] = {
@@ -72,10 +75,40 @@ export const useOfficeStore = create<OfficeState>((set) => ({
             status: agentData.status as AgentStatus,
             position: { x: 100 + Math.random() * 500, y: 100 + Math.random() * 300 },
             confirmed: true,
+            tasksCompleted: agentData.tasksCompleted || 0,
           };
         }
       });
       return { agents: newAgents };
+    });
+  },
+
+  updateAgentStatus: (agentId, status) => {
+    set((state) => {
+      if (state.agents[agentId]) {
+        return {
+          agents: {
+            ...state.agents,
+            [agentId]: { ...state.agents[agentId], status }
+          }
+        };
+      }
+      return state;
+    });
+  },
+
+  incrementAgentTasks: (agentId) => {
+    set((state) => {
+      if (state.agents[agentId]) {
+        const currentTasks = state.agents[agentId].tasksCompleted || 0;
+        return {
+          agents: {
+            ...state.agents,
+            [agentId]: { ...state.agents[agentId], tasksCompleted: currentTasks + 1 }
+          }
+        };
+      }
+      return state;
     });
   },
 

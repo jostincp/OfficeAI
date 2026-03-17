@@ -16,15 +16,17 @@ interface ChatState {
   dockExpanded: boolean;
   targetAgentId: string | null;
   error: string | null;
+  ws: WebSocket | null;
 
   sendMessage: (text: string) => Promise<void>;
+  setWebSocket: (ws: WebSocket) => void;
   toggleDock: () => void;
   setDockExpanded: (expanded: boolean) => void;
   setTargetAgent: (agentId: string) => void;
   clearError: () => void;
 }
 
-const API_URL = import.meta.env.VITE_ORCHESTRATOR_URL || 'http://localhost:3000';
+const WS_URL = import.meta.env.VITE_ORCHESTRATOR_URL?.replace('https:', 'wss:').replace('http:', 'ws:') || 'ws://localhost:3000';
 
 function generateId(): string {
   return Math.random().toString(36).substring(2, 15);
@@ -36,6 +38,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
   dockExpanded: false,
   targetAgentId: null,
   error: null,
+  ws: null,
+
+  setWebSocket: (ws) => set({ ws }),
 
   sendMessage: async (text) => {
     const trimmed = text.trim();
@@ -56,36 +61,31 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }));
 
     try {
-      // Crear proyecto con la documentación del usuario
-      const response = await fetch(`${API_URL}/api/projects`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: `Proyecto: ${trimmed.slice(0, 50)}`,
-          description: 'Creado desde el chat',
-          documentation: trimmed,
-        }),
-      });
+      const ws = get().ws;
+      
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        // Enviar por WebSocket al Lead (Alex)
+        ws.send(JSON.stringify({
+          type: 'CREATE_TASK',
+          text: trimmed,
+          agentId: 'lead-001'
+        }));
 
-      if (!response.ok) {
-        throw new Error('Error creando proyecto');
+        const assistantMsg: ChatMessage = {
+          id: generateId(),
+          role: "assistant",
+          content: `✅ Tarea enviada a **Alex (Lead)**\n\n"${trimmed.substring(0, 100)}${trimmed.length > 100 ? '...' : ''}"\n\nEl equipo está analizando tu solicitud...`,
+          timestamp: Date.now(),
+          agentName: 'Alex (Lead)',
+        };
+
+        set((s) => ({
+          messages: [...s.messages, assistantMsg],
+          isStreaming: false,
+        }));
+      } else {
+        throw new Error('WebSocket no conectado');
       }
-
-      const project = await response.json();
-
-      const assistantMsg: ChatMessage = {
-        id: generateId(),
-        role: "assistant",
-        content: `✅ Proyecto creado: **${project.name}**\n\nID: \`${project.id}\`\n\nEl equipo está analizando tu solicitud. Revisa el panel de actividad para ver el progreso.`,
-        timestamp: Date.now(),
-        agentName: 'Alex (Lead)',
-      };
-
-      set((s) => ({
-        messages: [...s.messages, assistantMsg],
-        isStreaming: false,
-      }));
-
     } catch (err) {
       set({
         error: err instanceof Error ? err.message : 'Error desconocido',

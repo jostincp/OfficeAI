@@ -93,6 +93,7 @@ export interface TaskUpdateEvent {
   type: 'task_update';
   taskId: string;
   status: TaskStatus;
+  agentId?: string;
   result?: TaskResult;
   timestamp: number;
 }
@@ -104,7 +105,15 @@ export interface ProjectUpdateEvent {
   timestamp: number;
 }
 
+export interface ProjectCreatedEvent {
+  type: 'project_created';
+  projectId: string;
+  agentId: string;
+  timestamp: number;
+}
+
 export type OrchestratorEvent = 
   | AgentStatusEvent 
   | TaskUpdateEvent 
-  | ProjectUpdateEvent;
+  | ProjectUpdateEvent
+  | ProjectCreatedEvent;

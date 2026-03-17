@@ -52,12 +52,12 @@ exports.AGENTS = [
     }
 ];
 exports.MODEL_CONFIG = {
-    lead: { provider: 'openrouter', model: 'kimi' }, // Usando Kimi mientras conseguimos Qwen
+    lead: { provider: 'moonshot', model: 'kimi-k2.5' },
     backend: { provider: 'deepseek', model: 'deepseek-coder' },
     frontend: { provider: 'deepseek', model: 'deepseek-coder' },
     content: { provider: 'minimax', model: 'minimax-m2.5' },
-    qa: { provider: 'openrouter', model: 'kimi' },
-    scheduler: { provider: 'openrouter', model: 'kimi' } // Usando Kimi mientras conseguimos Qwen
+    qa: { provider: 'moonshot', model: 'kimi-k2.5' },
+    scheduler: { provider: 'moonshot', model: 'kimi-k2.5' }
 };
 exports.SYSTEM_PROMPTS = {
     lead: `Eres Alex, el Tech Lead de un equipo de desarrollo de software.

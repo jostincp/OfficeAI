@@ -72,7 +72,7 @@ class TaskQueue {
                 cost: response.cost,
                 duration
             };
-            this.onTaskUpdate(taskId, 'completed', result);
+            this.onTaskUpdate(taskId, 'completed', result, agent.id);
             this.onAgentStatus(agent.id, 'idle');
             return result;
         }

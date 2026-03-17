@@ -15,7 +15,7 @@ export declare class TaskQueue {
     private llmService;
     private onTaskUpdate;
     private onAgentStatus;
-    constructor(redisUrl: string, onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult) => void, onAgentStatus: (agentId: string, status: string, taskId?: string) => void);
+    constructor(redisUrl: string, onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult, agentId?: string) => void, onAgentStatus: (agentId: string, status: string, taskId?: string) => void);
     addTask(task: Task): Promise<void>;
     startWorker(): Worker<TaskData>;
     private processTask;

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useChatStore } from '@/store/chat-store';
+import { useOfficeStore } from '@/store/office-store';
 
 const WS_URL = 'wss://officeai.testjostin.pro/ws';
 
@@ -13,8 +15,9 @@ export interface Agent {
 }
 
 export interface AgentEvent {
-  type: 'AGENT_THINKING' | 'AGENT_IDLE' | 'AGENT_WORKING' | 'AGENT_ERROR' | 'init' | 'agent_status';
+  type: 'AGENT_THINKING' | 'AGENT_IDLE' | 'AGENT_WORKING' | 'AGENT_ERROR' | 'init' | 'agent_status' | 'task_update';
   agentId?: string;
+  taskId?: string;
   status?: AgentStatus;
   agents?: Agent[];
   timestamp?: number;
@@ -26,11 +29,15 @@ export function useWebSocket() {
   const [lastEvent, setLastEvent] = useState<AgentEvent | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const setWebSocket = useChatStore((s) => s.setWebSocket);
+  const updateAgentStatus = useOfficeStore((s) => s.updateAgentStatus);
+  const incrementAgentTasks = useOfficeStore((s) => s.incrementAgentTasks);
 
   const connect = useCallback(() => {
     try {
       const ws = new WebSocket(WS_URL);
       wsRef.current = ws;
+      setWebSocket(ws);
 
       ws.onopen = () => {
         console.log('✅ WebSocket conectado');
@@ -50,6 +57,9 @@ export function useWebSocket() {
               break;
             case 'agent_status':
               if (data.agentId && data.status) {
+                // Actualizar en el store de office
+                updateAgentStatus(data.agentId, data.status);
+                
                 setAgents(prev => 
                   prev.map(agent => 
                     agent.id === data.agentId 
@@ -59,9 +69,31 @@ export function useWebSocket() {
                 );
               }
               break;
+            case 'task_update':
+              // Cuando una tarea se completa, incrementar el contador
+              if (data.status === 'completed' && data.taskId) {
+                // Encontrar qué agente completó la tarea
+                const agentId = data.agentId; // Necesitamos que el backend envíe esto
+                if (agentId) {
+                  incrementAgentTasks(agentId);
+                }
+              }
+              break;
             case 'AGENT_THINKING':
+              if (data.agentId) {
+                updateAgentStatus(data.agentId, 'waiting_approval');
+                setAgents(prev => 
+                  prev.map(agent => 
+                    agent.id === data.agentId 
+                      ? { ...agent, status: 'waiting_approval' }
+                      : agent
+                  )
+                );
+              }
+              break;
             case 'AGENT_WORKING':
               if (data.agentId) {
+                updateAgentStatus(data.agentId, 'working');
                 setAgents(prev => 
                   prev.map(agent => 
                     agent.id === data.agentId 
@@ -73,6 +105,7 @@ export function useWebSocket() {
               break;
             case 'AGENT_IDLE':
               if (data.agentId) {
+                updateAgentStatus(data.agentId, 'idle');
                 setAgents(prev => 
                   prev.map(agent => 
                     agent.id === data.agentId 
@@ -84,6 +117,7 @@ export function useWebSocket() {
               break;
             case 'AGENT_ERROR':
               if (data.agentId) {
+                updateAgentStatus(data.agentId, 'error');
                 setAgents(prev => 
                   prev.map(agent => 
                     agent.id === data.agentId 
@@ -115,7 +149,7 @@ export function useWebSocket() {
     } catch (err) {
       console.error('Error creating WebSocket:', err);
     }
-  }, []);
+  }, [updateAgentStatus, incrementAgentTasks]);
 
   useEffect(() => {
     connect();

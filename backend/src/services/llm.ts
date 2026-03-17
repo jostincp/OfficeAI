@@ -33,6 +33,8 @@ export class LLMService {
         return this.callOpenRouter(config.model, systemPrompt, fullPrompt);
       case 'minimax':
         return this.callMiniMax(systemPrompt, fullPrompt);
+      case 'moonshot':
+        return this.callKimi(systemPrompt, fullPrompt);
       default:
         throw new Error(`Proveedor no soportado: ${config.provider}`);
     }
@@ -102,6 +104,7 @@ export class LLMService {
   }
 
   private async callKimi(system: string, prompt: string): Promise<LLMResponse> {
+    // Usar API directa de Moonshot
     const response = await axios.post(
       'https://api.moonshot.cn/v1/chat/completions',
       {

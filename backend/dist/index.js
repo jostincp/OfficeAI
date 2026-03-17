@@ -30,11 +30,12 @@ function broadcast(event) {
     });
 }
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-const taskQueue = new taskQueue_1.TaskQueue(redisUrl, (taskId, status, result) => {
+const taskQueue = new taskQueue_1.TaskQueue(redisUrl, (taskId, status, result, agentId) => {
     broadcast({
         type: 'task_update',
         taskId,
         status,
+        agentId,
         result,
         timestamp: Date.now()
     });
@@ -58,6 +59,50 @@ wss.on('connection', (ws) => {
         projects: projectManager.getAllProjects(),
         timestamp: Date.now()
     }));
+    // Escuchar mensajes del cliente
+    ws.on('message', async (data) => {
+        try {
+            const message = JSON.parse(data.toString());
+            if (message.type === 'CREATE_TASK') {
+                const { text, agentId = 'lead-001' } = message;
+                console.log(`📨 Nueva tarea recibida para ${agentId}: ${text.substring(0, 50)}...`);
+                // Crear proyecto con la tarea
+                const project = await projectManager.createProject({
+                    name: `Tarea: ${text.substring(0, 30)}...`,
+                    description: 'Creada desde el chat',
+                    documentation: text
+                });
+                // Notificar a todos los clientes
+                broadcast({
+                    type: 'project_created',
+                    projectId: project.id,
+                    agentId,
+                    timestamp: Date.now()
+                });
+                // Actualizar estado del agente Lead a 'working'
+                broadcast({
+                    type: 'agent_status',
+                    agentId: 'lead-001',
+                    status: 'working',
+                    currentTask: project.id,
+                    timestamp: Date.now()
+                });
+                // Responder al cliente
+                ws.send(JSON.stringify({
+                    type: 'TASK_RECEIVED',
+                    projectId: project.id,
+                    status: 'success'
+                }));
+            }
+        }
+        catch (error) {
+            console.error('Error procesando mensaje WebSocket:', error);
+            ws.send(JSON.stringify({
+                type: 'ERROR',
+                message: error.message
+            }));
+        }
+    });
     ws.on('close', () => {
         clients.delete(ws);
         console.log('Cliente WebSocket desconectado');

@@ -8,6 +8,7 @@ export declare class LLMService {
     private deepseekKey;
     private openrouterKey;
     private minimaxKey;
+    private moonshotKey;
     constructor();
     generate(role: AgentRole, prompt: string, context?: string): Promise<LLMResponse>;
     private callDeepSeek;
