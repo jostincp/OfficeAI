@@ -12,11 +12,13 @@ export class LLMService {
   private deepseekKey: string;
   private openrouterKey: string;
   private minimaxKey: string;
+  private moonshotKey: string;
 
   constructor() {
     this.deepseekKey = process.env.DEEPSEEK_API_KEY || '';
     this.openrouterKey = process.env.OPENROUTER_API_KEY || '';
     this.minimaxKey = process.env.MINIMAX_API_KEY || '';
+    this.moonshotKey = process.env.MOONSHOT_API_KEY || '';
   }
 
   async generate(role: AgentRole, prompt: string, context?: string): Promise<LLMResponse> {
@@ -113,7 +115,7 @@ export class LLMService {
       },
       {
         headers: {
-          'Authorization': `Bearer ${this.openrouterKey}`,
+          'Authorization': `Bearer ${this.moonshotKey}`,
           'Content-Type': 'application/json'
         }
       }
