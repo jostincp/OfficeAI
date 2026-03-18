@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 import { useOfficeStore } from '@/store/office-store';
 import { createDesk, updateMonitor } from '@/office/furniture';
 import { eventBus } from '@/office/eventBus';
+import { loadTiledMap, setupTiledCamera, getMapObjects } from '@/office/tiledMap';
 
 class OfficeScene extends Phaser.Scene {
   private agents: Record<string, {
@@ -14,12 +15,12 @@ class OfficeScene extends Phaser.Scene {
   }> = {};
   
   private agentData = [
-    { id: 'lead-001', name: 'Alex', role: 'Lead', charIndex: 0, x: 150, y: 150 },
-    { id: 'backend-001', name: 'Sam', role: 'Backend', charIndex: 1, x: 400, y: 150 },
-    { id: 'frontend-001', name: 'Jordan', role: 'Frontend', charIndex: 2, x: 650, y: 150 },
-    { id: 'content-001', name: 'Olivia', role: 'Content', charIndex: 3, x: 150, y: 380 },
-    { id: 'qa-001', name: 'Casey', role: 'QA', charIndex: 4, x: 400, y: 380 },
-    { id: 'scheduler-001', name: 'Taylor', role: 'Scheduler', charIndex: 5, x: 650, y: 380 },
+    { id: 'lead-001', name: 'Alex', role: 'Lead', charIndex: 0, x: 80, y: 70 },
+    { id: 'backend-001', name: 'Sam', role: 'Backend', charIndex: 1, x: 240, y: 70 },
+    { id: 'frontend-001', name: 'Jordan', role: 'Frontend', charIndex: 2, x: 400, y: 70 },
+    { id: 'content-001', name: 'Olivia', role: 'Content', charIndex: 3, x: 80, y: 260 },
+    { id: 'qa-001', name: 'Casey', role: 'QA', charIndex: 4, x: 240, y: 260 },
+    { id: 'scheduler-001', name: 'Taylor', role: 'Scheduler', charIndex: 5, x: 400, y: 260 },
   ];
 
   constructor() {
@@ -27,6 +28,12 @@ class OfficeScene extends Phaser.Scene {
   }
 
   preload() {
+    // Cargar mapa Tiled desde JSON
+    this.load.tilemapTiledJSON('office-map', '/assets/map/office-map.json');
+
+    // Cargar tileset de oficina (16x16) - debe coincidir con el nombre en Tiled
+    this.load.image('modern_office_16x16', '/assets/pixelart/Modern_Office_16x16.png');
+
     // Cargar spritesheets de personajes (32x32 por frame)
     for (let i = 0; i < 6; i++) {
       this.load.spritesheet(`char_${i}`, `/assets/characters/char_${i}.png`, {
@@ -34,9 +41,8 @@ class OfficeScene extends Phaser.Scene {
         frameHeight: 32
       });
     }
-    
+
     // Cargar imágenes de muebles
-    this.load.image('floor', '/assets/floors/floor_0.png');
     this.load.image('desk', '/assets/furniture/DESK/DESK_FRONT.png');
     this.load.image('chair', '/assets/furniture/WOODEN_CHAIR/WOODEN_CHAIR_FRONT.png');
     this.load.image('pc_on', '/assets/furniture/PC/PC_FRONT_ON_1.png');
@@ -48,57 +54,24 @@ class OfficeScene extends Phaser.Scene {
     // Habilitar iluminación
     this.lights.enable().setAmbientColor(0x333344);
 
-    // Crear suelo de madera oscura con grilla
-    const graphics = this.add.graphics();
-    const tileSize = 64;
-    const baseColor = 0x1a1a2e;
-    const gridColor = 0x2a2a4e;
-    
-    // Colores base RGB
-    const r = (baseColor >> 16) & 0xff;
-    const g = (baseColor >> 8) & 0xff;
-    const b = baseColor & 0xff;
-    
-    // Dibujar tiles con variación de brillo
-    for (let x = 0; x < 800; x += tileSize) {
-      for (let y = 0; y < 600; y += tileSize) {
-        // Variación aleatoria de brillo ±10%
-        const variation = 0.9 + Math.random() * 0.2;
-        
-        const newR = Math.min(255, Math.floor(r * variation));
-        const newG = Math.min(255, Math.floor(g * variation));
-        const newB = Math.min(255, Math.floor(b * variation));
-        
-        const tileColor = (newR << 16) | (newG << 8) | newB;
-        
-        graphics.fillStyle(tileColor, 1);
-        graphics.fillRect(x, y, tileSize, tileSize);
+    // Cargar mapa Tiled desde JSON
+    const map = loadTiledMap(this, 'office-map');
+
+    if (map) {
+      setupTiledCamera(this, map);
+
+      // Obtener posiciones de agentes desde el mapa (capa de objetos)
+      const agentObjects = getMapObjects(map, 'Agents');
+      if (agentObjects.length > 0) {
+        // Actualizar posiciones de agentes desde el mapa
+        agentObjects.forEach((obj, index) => {
+          if (index < this.agentData.length) {
+            this.agentData[index].x = obj.x ?? this.agentData[index].x;
+            this.agentData[index].y = obj.y ?? this.agentData[index].y;
+          }
+        });
       }
     }
-    
-    // Dibujar líneas de grilla tenues
-    graphics.lineStyle(1, gridColor, 0.3);
-    
-    // Líneas verticales
-    for (let x = 0; x <= 800; x += tileSize) {
-      graphics.moveTo(x, 0);
-      graphics.lineTo(x, 600);
-    }
-    
-    // Líneas horizontales
-    for (let y = 0; y <= 600; y += tileSize) {
-      graphics.moveTo(0, y);
-      graphics.lineTo(800, y);
-    }
-    
-    graphics.strokePath();
-
-    // Paredes
-    graphics.fillStyle(0x1a1825, 1);
-    graphics.fillRect(0, 0, 800, 20); // Top
-    graphics.fillRect(0, 580, 800, 20); // Bottom
-    graphics.fillRect(0, 0, 20, 600); // Left
-    graphics.fillRect(780, 0, 20, 600); // Right
 
     // Crear animaciones de personajes
     for (let i = 0; i < 6; i++) {
