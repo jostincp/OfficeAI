@@ -66,20 +66,28 @@ docker compose up -d
 
 ## 🤖 Agentes
 
-| Agente | Rol | Modelo IA | API |
-|--------|-----|-----------|-----|
-| Alex | Lead | Kimi K2.5 | Moonshot (api.moonshot.ai) |
-| Sam | Backend | DeepSeek Coder | DeepSeek (api.deepseek.com) |
-| Jordan | Frontend | DeepSeek Coder | DeepSeek (api.deepseek.com) |
-| Olivia | Content | MiniMax M2.5 | MiniMax (api.minimax.chat) |
-| Casey | QA | Kimi K2.5 | Moonshot (api.moonshot.ai) |
-| Taylor | Scheduler | Kimi K2.5 | Moonshot (api.moonshot.ai) |
+| Rol | Modelo IA | API | Descripción |
+|-----|-----------|-----|-------------|
+| Lead | Kimi K2.5 | Moonshot | Analiza requerimientos y delega tareas |
+| Backend | DeepSeek Coder | DeepSeek | APIs, bases de datos, lógica de negocio |
+| Frontend | DeepSeek Coder | DeepSeek | Interfaces, React, CSS, componentes |
+| Content | MiniMax M2.5 | MiniMax | Contenido escrito, blogs, guiones, copy |
+| QA | Kimi K2.5 | Moonshot | Testing, seguridad, revisión de código |
+| Scheduler | Kimi K2.5 | Moonshot | Organización de tareas y dependencias |
+
+## 🔄 Flujo de Trabajo
+
+1. **Usuario envía mensaje** al Lead
+2. **Lead analiza** y genera plan en formato JSON
+3. **Sistema crea tareas** automáticamente para cada agente
+4. **Agentes procesan** sus tareas en paralelo
+5. **Respuestas aparecen** en el chat
 
 ## 🔧 Configuración de APIs
 
 ### Moonshot (Kimi K2.5)
 - **URL:** https://api.moonshot.ai/v1/chat/completions
-- **Modelo:** `kimi-k2.5`
+- **Modelos:** `kimi-k2.5`, `kimi-k2-thinking`
 - **Docs:** https://platform.moonshot.ai
 
 ### DeepSeek Coder
@@ -88,9 +96,59 @@ docker compose up -d
 - **Docs:** https://platform.deepseek.com
 
 ### MiniMax M2.5
-- **URL:** https://api.minimax.chat/v1/text/chatcompletion_v2
-- **Modelo:** `MiniMax-M2.5`
+- **URL:** https://api.minimax.io/v1/text/chatcompletion_v2
+- **Modelo:** `MiniMax-M2.5-highspeed`
 - **Docs:** https://www.minimaxi.com
+
+## 🎮 Mapa de Oficina (Tiled)
+
+El mapa de la oficina se carga desde un archivo JSON editable:
+
+```
+frontend/public/assets/map/office-map.json
+```
+
+### Estructura del Mapa
+
+| Capa | Tipo | Descripción |
+|------|------|-------------|
+| `Floor` | tilelayer | Piso de la oficina |
+| `Walls` | tilelayer | Bordes y zócalos |
+| `Agents` | objectgroup | Posiciones de los 6 agentes |
+
+### Tileset
+
+- **Archivo:** `frontend/public/assets/pixelart/Modern_Office_16x16.png`
+- **Tamaño:** 16x16 píxeles por tile
+- **Formato:** Tileset de LimeZu (Modern Office Revamped)
+
+### Editar el Mapa
+
+Puedes editar el JSON directamente o usar **Tiled Map Editor** (https://www.mapeditor.org/):
+
+1. Abre `office-map.json` en Tiled
+2. Edita las capas Floor, Walls y Agents
+3. Guarda y exporta como JSON
+4. El cambio se refleja automáticamente al recargar
+
+## 🎨 Assets Pixel-Art
+
+Los assets se encuentran en:
+
+```
+frontend/public/assets/pixelart/
+├── Modern_Office_16x16.png       # Tileset principal
+├── Modern_Office_32x32.png       # Tileset 32x32
+├── Modern_Office_48x48.png       # Tileset 48x48
+├── 1_Room_Builder_Office/        # Tiles base
+├── 2_Modern_Office_Black_Shadow/ # Con sombras
+├── 3_Modern_Office_Shadowless/   # Sin sombras
+├── 4_Modern_Office_singles/      # Objetos individuales
+├── CharacterGenerator/           # Generador de personajes
+└── Modern tiles_Free/            # Tiles de interiores (free)
+```
+
+**Créditos:** LimeZu (https://limezu.itch.io/)
 
 ## 🛠️ Desarrollo
 
@@ -126,11 +184,12 @@ docker build -t backend-orchestrator:latest .
 backend/
 ├── src/
 │   ├── config/
-│   │   └── agents.ts          # Configuración de agentes
+│   │   └── agents.ts          # Configuración de agentes y prompts
 │   ├── services/
 │   │   ├── llm.ts             # Servicio LLM (APIs directas)
 │   │   ├── taskQueue.ts       # Cola de tareas con BullMQ
-│   │   └── projectManager.ts  # Gestión de proyectos
+│   │   ├── projectManager.ts  # Gestión de proyectos
+│   │   └── tiledMap.ts        # Carga de mapas Tiled
 │   ├── types.ts               # Tipos TypeScript
 │   └── index.ts               # Entry point + WebSocket
 ├── .env                       # Variables de entorno
@@ -142,15 +201,25 @@ backend/
 ```
 frontend/
 ├── src/
-│   ├── components/            # Componentes React
+│   ├── components/              # Componentes React
+│   │   └── office-2d/
+│   │       └── PhaserOffice.tsx # Escena Phaser principal
 │   ├── hooks/
-│   │   └── useWebSocket.ts    # Hook WebSocket
+│   │   └── useWebSocket.ts      # Hook WebSocket
 │   ├── store/
-│   │   └── chat-store.ts      # Estado del chat
+│   │   └── chat-store.ts        # Estado del chat
 │   ├── config/
-│   │   └── agents.ts          # Configuración de agentes
-│   └── scenes/                # Escenas Phaser
-├── dist/                      # Build de producción
+│   │   └── agents.ts            # Configuración de agentes
+│   └── office/
+│       ├── tiledMap.ts          # Sistema de mapas Tiled
+│       ├── furniture.ts         # Muebles y objetos
+│       └── eventBus.ts          # Eventos entre componentes
+├── public/
+│   └── assets/
+│       ├── map/
+│       │   └── office-map.json  # Mapa editable
+│       ├── pixelart/            # Assets gráficos
+│       └── characters/          # Sprites de agentes
 └── Dockerfile
 ```
 
@@ -191,12 +260,15 @@ docker build -t officeai-frontend:latest .
 ### 3. Crear red Docker (si no existe)
 ```bash
 docker network create core_web-network
+docker network create officeai_officeai-network
 ```
 
 ### 4. Ejecutar contenedores
 ```bash
-# Redis (si no está corriendo)
-docker run -d --name officeai-redis --network officeai_officeai-network redis:7-alpine
+# Redis
+docker run -d --name officeai-redis \
+  --network officeai_officeai-network \
+  redis:7-alpine
 
 # Backend
 docker run -d --name officeai-backend \
@@ -217,3 +289,9 @@ docker run -d --name officeai-frontend \
 ## 📝 Licencia
 
 MIT - Jostin
+
+## 🙏 Créditos
+
+- **Pixel-Art:** LimeZu (https://limezu.itch.io/)
+- **Character Generator:** LimeZu Character Generator 2.0
+- **Tilesets:** Modern Office Revamped, Modern Interiors
