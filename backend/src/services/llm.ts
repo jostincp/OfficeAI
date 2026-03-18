@@ -28,7 +28,7 @@ export class LLMService {
       case 'deepseek':
         return this.callDeepSeek(systemPrompt, fullPrompt);
       case 'minimax':
-        return this.callMiniMax(systemPrompt, fullPrompt);
+        return this.callMiniMax(systemPrompt, fullPrompt, config.model);
       case 'moonshot':
         return this.callKimi(systemPrompt, fullPrompt, config.model);
       default:
@@ -96,18 +96,20 @@ export class LLMService {
     }
   }
 
-  private async callMiniMax(system: string, prompt: string): Promise<LLMResponse> {
-    const response = await axios.post(
-      'https://api.minimax.chat/v1/text/chatcompletion_v2',
-      {
-        model: 'MiniMax-M2.5',
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4000
-      },
+  private async callMiniMax(system: string, prompt: string, model: string = 'MiniMax-M2.5'): Promise<LLMResponse> {
+    try {
+      const response = await axios.post(
+        'https://api.minimax.io/v1/text/chatcompletion_v2',
+        {
+          model: model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.9,
+          max_tokens: 4000,
+          stream: false
+        },
       {
         headers: {
           'Authorization': `Bearer ${this.minimaxKey}`,
@@ -122,5 +124,9 @@ export class LLMService {
     const cost = (tokensUsed / 1_000_000) * 1.0;
 
     return { content, tokensUsed, cost };
+    } catch (error: any) {
+      console.error('Error llamando a MiniMax:', error.response?.data || error.message);
+      throw error;
+    }
   }
 }

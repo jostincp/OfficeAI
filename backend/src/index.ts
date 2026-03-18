@@ -67,6 +67,7 @@ const taskQueue = new TaskQueue(
 );
 
 const projectManager = new ProjectManager(taskQueue);
+taskQueue.setProjectManager(projectManager);
 const worker = taskQueue.startWorker();
 
 wss.on('connection', (ws) => {

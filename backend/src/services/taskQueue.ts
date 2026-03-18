@@ -3,6 +3,7 @@ import { Redis } from 'ioredis';
 import { Task, TaskResult, AgentRole, TaskStatus } from '../types';
 import { LLMService } from './llm';
 import { AGENTS } from '../config/agents';
+import { ProjectManager } from './projectManager';
 
 export interface TaskData {
   taskId: string;
@@ -20,6 +21,7 @@ export class TaskQueue {
   private llmService: LLMService;
   private onTaskUpdate: (taskId: string, status: TaskStatus, result?: TaskResult, agentId?: string) => void;
   private onAgentStatus: (agentId: string, status: string, taskId?: string) => void;
+  private projectManager?: ProjectManager;
 
   constructor(
     redisUrl: string,
@@ -33,6 +35,10 @@ export class TaskQueue {
     this.llmService = new LLMService();
     this.onTaskUpdate = onTaskUpdate;
     this.onAgentStatus = onAgentStatus;
+  }
+
+  setProjectManager(projectManager: ProjectManager): void {
+    this.projectManager = projectManager;
   }
 
   async addTask(task: Task): Promise<void> {
@@ -74,8 +80,8 @@ export class TaskQueue {
   }
 
   private async processTask(job: Job<TaskData>): Promise<TaskResult> {
-    const { taskId, assignedTo, title, description, context, requiresApproval } = job.data;
-    
+    const { taskId, projectId, assignedTo, title, description, context, requiresApproval } = job.data;
+
     const agent = AGENTS.find(a => a.role === assignedTo);
     if (!agent) {
       throw new Error(`Agente no encontrado para rol: ${assignedTo}`);
@@ -105,9 +111,14 @@ export class TaskQueue {
         duration
       };
 
+      // Si es el Lead (Alex) y generó un plan, crear sub-tareas
+      if (assignedTo === 'lead' && this.projectManager) {
+        await this.processLeadOutput(projectId, response.content);
+      }
+
       // Emitir evento de output para el Activity Log
       this.onAgentStatus(agent.id, 'output', taskId);
-      
+
       this.onTaskUpdate(taskId, 'completed', result, agent.id);
       this.onAgentStatus(agent.id, 'idle');
 
@@ -115,6 +126,45 @@ export class TaskQueue {
     } catch (error) {
       this.onAgentStatus(agent.id, 'error', taskId);
       throw error;
+    }
+  }
+
+  private async processLeadOutput(projectId: string, content: string): Promise<void> {
+    if (!this.projectManager) return;
+
+    try {
+      // Extraer JSON de la respuesta
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.log('Lead no generó JSON estructurado, usando plan por defecto');
+        await this.projectManager.createSubtasksFromLead(projectId, content);
+        return;
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (!parsed.tasks || !Array.isArray(parsed.tasks)) {
+        console.log('JSON no contiene tasks válidas, usando plan por defecto');
+        await this.projectManager.createSubtasksFromLead(projectId, content);
+        return;
+      }
+
+      // Crear tareas desde el JSON del Lead
+      for (const task of parsed.tasks) {
+        if (task.assignedTo && task.title && task.description) {
+          await this.projectManager.createTask({
+            projectId,
+            title: task.title,
+            description: task.description,
+            assignedTo: task.assignedTo as AgentRole,
+            requiresApproval: task.assignedTo === 'content' // Solo content requiere aprobación
+          });
+          console.log(`✅ Tarea creada por Lead: ${task.title} -> ${task.assignedTo}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error procesando output del Lead:', error);
+      // Fallback a plan por defecto
+      await this.projectManager.createSubtasksFromLead(projectId, content);
     }
   }
 
